@@ -14,10 +14,10 @@ user = config.get('MYSQL', 'user')
 passwd = config.get('MYSQL', 'passwd')
 db = config.get('MYSQL', 'db')
 
-devid = 'xxx'
-devpassword = 'yyy'
-ssid = 'test'
-sspassword = 'test'
+devid = config.get('ID', 'devid')
+devpassword = config.get('ID', 'devpassword')
+ssid = config.get('ID', 'ssid')
+sspassword = config.get('ID', 'sspassword')
 
 db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db)
 cur = db.cursor()
@@ -25,6 +25,8 @@ cur = db.cursor()
 consoles = config.items('CONSOLES')
 
 for key, console in consoles:
+
+    systemeid = config.get('SYSTEMID', console)
 
     cur.execute("SELECT * FROM "+console+" WHERE nom_ss is NULL")
     rows = cur.fetchall()
@@ -35,7 +37,7 @@ for key, console in consoles:
 	crc  = row[6]
 	romnom = rom.replace(" ", "%20").replace("(", "%28").replace(")", "%29")
 
-	url = "https://www.screenscraper.fr/api/jeuInfos.php?devid="+devid+"&devpassword="+devpassword+"&softname=zzz&output=json&ssid="+ssid+"&sspassword="+sspassword+"&crc="+crc+"&systemeid=1&romtype=rom&romnom="+romnom+"&romtaille="+romtaille
+	url = "https://www.screenscraper.fr/api/jeuInfos.php?devid="+devid+"&devpassword="+devpassword+"&softname=zzz&output=json&ssid="+ssid+"&sspassword="+sspassword+"&crc="+crc+"&systemeid="+systemeid+"&romtype=rom&romnom="+romnom+"&romtaille="+romtaille
 	req = urllib2.Request(url)
 	opener = urllib2.build_opener()
 	f = opener.open(req)
@@ -43,15 +45,13 @@ for key, console in consoles:
 	try:
 	    fichier_json = json.loads(f.read())
 
-	    nom =  fichier_json["response"]["jeu"]["nom"]
-	    system_ss = fichier_json["response"]["jeu"]["systemenom"]
+	    nom_ss =  fichier_json["response"]["jeu"]["nom"]
+	    print nom_ss
 
-	    nom_ss = (nom_ss.upper())
-
-	    cur.execute("UPDATE "+console+" SET nom_ss=%s WHERE description=%s ", (nom_ss, rom))
+	    cur.execute("UPDATE "+console+" SET nom_ss=%s WHERE name=%s ", (nom_ss, rom))
 
 	except ValueError, f:
 	    print "ERROR"
 
-    db.commit()
+	db.commit()
 db.close()
