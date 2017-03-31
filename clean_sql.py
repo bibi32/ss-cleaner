@@ -5,7 +5,6 @@ import MySQLdb
 import os
 import sys
 import re
-import zipfile
 import shutil
 from ConfigParser import SafeConfigParser
 
@@ -110,13 +109,13 @@ for key, console in consoles:
 	    if not os.path.exists(directory):
 		os.makedirs(directory)
 
-	    file_source = source + console + '/' + row[1] + '.zip'
-	    file_destination = missing + console + '/' + row[1] + '.zip'
+	    file_source = source + console + '/' + os.path.splitext(row[2])[0] + '.zip'
+	    file_destination = missing + console + '/' + os.path.splitext(row[2])[0] + '.zip'
 
-#	    shutil.copy(file_source, file_destination)
+	    shutil.copy(file_source, file_destination)
 
 	db.commit()
-#	db.close()
+	db.close()
 	sys.exit("Error message")
     else :
 
@@ -170,10 +169,10 @@ for key, console in consoles:
 	    if not os.path.exists(directory):
 		os.makedirs(directory)
 
-	    file_source = source + console + '/' + row[1] + '.zip'
-	    file_destination = destination + console + '/' + row[1] + '.zip'
+	    file_source = source + console + '/' + os.path.splitext(row[2])[0] + '.zip'
+	    file_destination = destination + console + '/' + os.path.splitext(row[2])[0] + '.zip'
 
-#	    shutil.copy(file_source, file_destination)
+	    shutil.copy(file_source, file_destination)
 
 
     db.commit()
