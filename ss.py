@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*- 
 
 import MySQLdb
+import urllib
 import urllib2
 import json
+import cgi
 from ConfigParser import SafeConfigParser
 
 config = SafeConfigParser()
@@ -35,7 +37,7 @@ for key, console in consoles:
 	rom = row[2]
 	romtaille = row[5]
 	crc  = row[6]
-	romnom = rom.replace(" ", "%20").replace("(", "%28").replace(")", "%29")
+	romnom = urllib.quote(rom, safe='')
 
 	url = "https://www.screenscraper.fr/api/jeuInfos.php?devid="+devid+"&devpassword="+devpassword+"&softname=zzz&output=json&ssid="+ssid+"&sspassword="+sspassword+"&crc="+crc+"&systemeid="+systemeid+"&romtype=rom&romnom="+romnom+"&romtaille="+romtaille
 	req = urllib2.Request(url)
