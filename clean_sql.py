@@ -17,7 +17,6 @@ passwd = config.get('MYSQL', 'passwd')
 db = config.get('MYSQL', 'db')
 
 source = config.get('PATH', 'romssource')
-missing = config.get('PATH', 'romsmissing')
 destination = config.get('PATH', 'romsclean')
 
 db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db)
@@ -64,8 +63,6 @@ def mark_doublons(console,colonne):
 	for row in rows:
 	    sql = "UPDATE "+console+" SET status=%s WHERE name=%s"
 	    cur.execute( sql, ('OK', row[0]))
-
-
 
 
 for key, console in consoles:
