@@ -45,7 +45,9 @@ for key, console in consoles:
 	    print 'fichier non trouvé : ' + name
 	else:
 	    f = open(files, 'rb')
-#	    f.seek(16) # skip the first 16 bytes for nes
+	    extension = os.path.splitext(files)[1][1:]
+	    if extension == 'nes':
+		f.seek(16) # skip the first 16 bytes for nes
 	    rest = f.read()
 	    m = hashlib.md5()
 	    m.update(rest)
@@ -63,7 +65,9 @@ for key, console in consoles:
 	files = (os.path.join(source + console + '/' + file))
 
 	f = open(files, 'rb')
-#	f.seek(16) # skip the first 16 bytes for nes
+	extension = os.path.splitext(files)[1][1:]
+	if extension == 'nes':
+	    f.seek(16) # skip the first 16 bytes for nes
 	rest = f.read()
 	m = hashlib.md5()
 	m.update(rest)
