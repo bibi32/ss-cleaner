@@ -64,12 +64,32 @@ def mark_doublons(console,colonne):
 	    sql = "UPDATE "+console+" SET status=%s WHERE name=%s"
 	    cur.execute( sql, ('OK', row[0]))
 
+## Fonction copier résultat final
+def copy_roms():
+    sql = "SELECT * FROM "+console+" WHERE status=%s"
+    cur.execute( sql, ('OK',))
+    rows = cur.fetchall()
+
+    directory = destination + console
+
+    if os.path.exists(directory):
+	shutil.rmtree(directory)
+
+    for row in rows:
+	if not os.path.exists(directory):
+	    os.makedirs(directory)
+
+	file_source = source + console + '/' + os.path.splitext(row[2])[0] + '.zip'
+	file_destination = destination + console + '/' + os.path.splitext(row[2])[0] + '.zip'
+
+	shutil.copy(file_source, file_destination)
+
 
 for key, console in consoles:
     print console
 
 ## Reset status
-#    cur.execute("UPDATE "+console+" SET status = NULL")
+    cur.execute("UPDATE "+console+" SET status = NULL")
 
 ## Count nbr roms
     print "nbr roms : " + count_null(console)
@@ -137,23 +157,7 @@ for key, console in consoles:
 	print "nbr roms OK : " + count_ok(console)
 
 ## Copier resultat final
-	directory = destination + console
-	sql = "SELECT * FROM "+console+" WHERE status=%s"
-	cur.execute( sql, ('OK',))
-	rows = cur.fetchall()
-
-	if os.path.exists(directory):
-	    shutil.rmtree(directory)
-
-	for row in rows:
-	    if not os.path.exists(directory):
-		os.makedirs(directory)
-
-	    file_source = source + console + '/' + os.path.splitext(row[2])[0] + '.zip'
-	    file_destination = destination + console + '/' + os.path.splitext(row[2])[0] + '.zip'
-
-#	    shutil.copy(file_source, file_destination)
-
+#	copy_roms()
 
     db.commit()
 db.close()
