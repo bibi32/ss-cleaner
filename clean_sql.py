@@ -53,7 +53,7 @@ def mark_unique(console,colonne):
 	sql = "UPDATE "+console+" SET status=%s WHERE name=%s"
 	cur.execute( sql, ('OK', row[0]))
 
-## Marquer doublons
+## Fonction marquer doublons
 def mark_doublons(console,colonne):
     cur.execute("SELECT "+colonne+", COUNT(*) c FROM "+console+" WHERE status IS NULL GROUP BY "+colonne+" HAVING c > 1")
     rows = cur.fetchall()
