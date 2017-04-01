@@ -22,7 +22,8 @@ destination = config.get('PATH', 'romsclean')
 db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db)
 cur = db.cursor()
 
-list = config.items('EXCLUS')
+exclus = config.items('EXCLUS')
+regions = config.items('REGION')
 consoles = config.items('CONSOLES')
 
 
@@ -95,8 +96,15 @@ for key, console in consoles:
     print "nbr roms : " + count_null(console)
 
 ## Marquer exclus
-    for key, variable in list:
-	cur.execute("UPDATE "+console+" SET status=%s WHERE name LIKE %s ",('KO', '%'+variable+'%',))
+    for key, exclu in exclus:
+	cur.execute("UPDATE "+console+" SET status=%s WHERE name LIKE %s ",('KO', '%'+exclu+'%',))
+
+## Count nbr roms clean
+    print "nbr roms clean : " + count_null(console)
+
+## Marquer regions exclus
+    for key, region in regions:
+	cur.execute("UPDATE "+console+" SET status=%s WHERE name LIKE %s ",('KO', '%'+region+'%',))
 
 ## Count nbr roms clean
     print "nbr roms clean : " + count_null(console)
@@ -126,11 +134,14 @@ for key, console in consoles:
     print "nbr roms OK : " + count_ok(console)
 
 ## Count nbr nom_ss manquant
-    print "nbr roms nom_ss manquant : " + count_null(console)
+    sql = "SELECT COUNT(*) FROM "+console+" WHERE status=%s AND nom_ss IS NULL"
+    cur.execute( sql, ('OK',))
+    result=cur.fetchone()
+    print "nbr roms nom_ss manquant : " + str(result[0])
 
 ## Stopper si nom_ss manquant
     manquant = count_null(console)
-    if int(manquant) != 0 :
+    if result[0] != 0 :
 
 	db.commit()
 	db.close()
