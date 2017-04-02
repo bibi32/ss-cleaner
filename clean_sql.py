@@ -68,8 +68,8 @@ def mark_doublons(console,colonne):
 	for key, keptregion in keptregions:
 	    mysqlcmd += "WHEN name LIKE %s THEN "+str(i)+" "
 	    arguments.append("%"+keptregion+"%")
-	i += 1
-	mysqlcmd += "ELSE "+str(len(keptregions))
+	    i += 1
+	mysqlcmd += "ELSE "+str(i)
 
 	sql = "SELECT name FROM "+console+" WHERE status IS NULL AND "+colonne+"=%s ORDER BY CASE "+mysqlcmd+" END LIMIT 1"
 	cur.execute( sql, tuple(arguments))
