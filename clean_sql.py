@@ -23,6 +23,7 @@ db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db)
 cur = db.cursor()
 
 exclus = config.items('EXCLUS')
+exclus2 = config.items('EXCLUS2')
 regions = config.items('REGION')
 consoles = config.items('CONSOLES')
 
@@ -85,6 +86,18 @@ def copy_roms():
 
 	shutil.copy(file_source, file_destination)
 
+## Fonction marquer exclus et region entre parentheses
+def mark_exclude(console,variable):
+    cur.execute("SELECT name FROM "+console)
+    rows = cur.fetchall()
+    for row in rows:
+	parentheses = re.findall(r'\(.*?\)',row[0])
+	for content in parentheses:
+	    contenu = re.sub('[(){}<>]', '', content)
+	    if variable in contenu:
+		sql = "UPDATE "+console+" SET status=%s WHERE name=%s"
+		cur.execute( sql, ('KO', row[0]))
+
 
 for key, console in consoles:
     print console
@@ -97,14 +110,15 @@ for key, console in consoles:
 
 ## Marquer exclus
     for key, exclu in exclus:
-	cur.execute("UPDATE "+console+" SET status=%s WHERE name LIKE %s ",('KO', '%'+exclu+'%',))
-
-## Count nbr roms clean
-    print "nbr roms clean : " + count_null(console)
+	mark_exclude(console,exclu)
 
 ## Marquer regions exclus
     for key, region in regions:
-	cur.execute("UPDATE "+console+" SET status=%s WHERE name LIKE %s ",('KO', '%'+region+'%',))
+	mark_exclude(console,region)
+
+## Marquer exclus2
+    for key, exclu2 in exclus2:
+	cur.execute("UPDATE "+console+" SET status=%s WHERE name LIKE %s ",('KO', '%'+exclu2+'%',))
 
 ## Count nbr roms clean
     print "nbr roms clean : " + count_null(console)
@@ -168,7 +182,7 @@ for key, console in consoles:
 	print "nbr roms OK : " + count_ok(console)
 
 ## Copier resultat final
-#	copy_roms()
+# 	copy_roms()
 
     db.commit()
 db.close()
