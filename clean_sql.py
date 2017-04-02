@@ -26,6 +26,7 @@ exclus = config.items('EXCLUS')
 exclus2 = config.items('EXCLUS2')
 regions = config.items('REGION')
 consoles = config.items('CONSOLES')
+keptregions = config.items('KEPTREGION')
 
 
 ## Foction count nbr roms null
@@ -59,8 +60,19 @@ def mark_doublons(console,colonne):
     cur.execute("SELECT "+colonne+", COUNT(*) c FROM "+console+" WHERE status IS NULL GROUP BY "+colonne+" HAVING c > 1")
     rows = cur.fetchall()
     for row in rows:
-	sql = "SELECT name FROM "+console+" WHERE status IS NULL AND "+colonne+"=%s ORDER BY CASE WHEN name LIKE %s THEN 0 WHEN name LIKE %s THEN 1 WHEN name LIKE %s THEN 2 WHEN name LIKE %s THEN 3 ELSE 4 END LIMIT 1"
-	cur.execute( sql, (row[0],'%France%', '%Europe%', '%World%', '%USA%'))
+
+	## Créé la commande sql pour classer par préférence des keptregions
+	i = 0
+	mysqlcmd = ""
+	arguments = [row[0]]
+	for key, keptregion in keptregions:
+	    mysqlcmd += "WHEN name LIKE %s THEN "+str(i)+" "
+	    arguments.append("%"+keptregion+"%")
+	i += 1
+	mysqlcmd += "ELSE "+str(len(keptregions))
+
+	sql = "SELECT name FROM "+console+" WHERE status IS NULL AND "+colonne+"=%s ORDER BY CASE "+mysqlcmd+" END LIMIT 1"
+	cur.execute( sql, tuple(arguments))
 	rows = cur.fetchall()
 	for row in rows:
 	    sql = "UPDATE "+console+" SET status=%s WHERE name=%s"
