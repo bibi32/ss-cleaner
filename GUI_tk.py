@@ -2,13 +2,18 @@
 # -*- coding: utf-8 -*- 
 
 from Tkinter import *
-import tkFileDialog as filedialog
+import Tkinter as tk
+from tkFileDialog import askopenfilename
+import ttk
 import MySQLdb
 import urllib
 import urllib2
 import json
 import cgi
 import re
+
+import time
+
 from ConfigParser import SafeConfigParser
 
 config = SafeConfigParser()
@@ -20,17 +25,19 @@ passwd = config.get('MYSQL', 'passwd')
 database = config.get('MYSQL', 'database')
 
 db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=database)
-cur = db.cursor()
+#cur = db.cursor()
 
 devid = config.get('ID', 'devid')
 devpassword = config.get('ID', 'devpassword')
 ssid = config.get('ID', 'ssid')
 sspassword = config.get('ID', 'sspassword')
 
-exclus = config.items('EXCLUS')
-exclus2 = config.items('EXCLUS2')
+#exclus = config.items('EXCLUS')
+# exclus = exclus.split(',')
+exclus = config.get('EXCLUS', 'list').split('; ')
+exclus2 = config.get('EXCLUS2', 'list').split('; ')
 regions = config.items('REGION')
-keptregions = config.items('KEPTREGION')
+keptregions = config.get('KEPTREGION', 'list').split('; ')
 consoles = config.items('CONSOLES')
 
 
@@ -66,6 +73,13 @@ def demande():
 	config.write(open('config.ini','w'))
 
 
+    dat_gamegear = config.get('DAT', 'gamegear')
+
+    fileName = ''
+    def openFile():
+	fileName = askopenfilename()
+	print fileName
+	# parent=root,initialdir='/home/',title='Select your watermark file', filetypes=[('image files', '.png')]
 
     fen = Tk()
     titre = Label(fen,text="Paramètres")
@@ -103,8 +117,12 @@ def demande():
     ask_passwd = Entry(fen, textvariable=value_passwd)
     ask_database = Entry(fen, textvariable=value_database)
 
-         
-    bouttonValider = Button(fen,text="Valider",command=saisie)
+
+    ask_btn_gamegear = Button(fen,text="dat gamegear",command=openFile)
+    value_dat_gamegear = StringVar(fen, value=dat_gamegear)
+    ask_dat_gamegear = Entry(fen, textvariable=value_dat_gamegear)
+
+    bouttonValider = Button(fen,text="Valider",command=openFile)
     bouttonQuit = Button(fen,text="Quitter",command=quit)
 
 
@@ -128,12 +146,50 @@ def demande():
     label_database.grid(row=9,column=1)
     ask_database.grid(row=9,column=2,columnspan=3)
 
+    ask_btn_gamegear.grid(row=10,column=1)
+    ask_dat_gamegear.grid(row=10,column=2,columnspan=3)
 
-    bouttonValider.grid(row=10,column=1)
-    bouttonQuit.grid(row=10,column=2)
- 
+    bouttonValider.grid(row=11,column=1)
+    bouttonQuit.grid(row=11,column=3)
+
     fen.mainloop()
 
+
+class App(object):
+    def __init__(self, master, **kwargs):
+        self.master = master
+        self.create_text()
+
+    def create_text(self):
+	self.button = ttk.Button(text="start", command=self.start)
+	self.progress=ttk.Progressbar(fenetre, length=400, mode="determinate", maximum=10)
+	self.progress.grid(row=1,column=2)
+	self.button.grid(row=1,column=1)
+
+        self.bytes = 0
+        self.maxbytes = 0
+
+
+    def start(self):
+        self.progress["value"] = 0
+        self.maxbytes = 50000
+        self.progress["maximum"] = 50000
+        self.read_bytes()
+
+
+    def read_bytes(self):
+        '''simulate reading 500 bytes; update progress bar'''
+        self.bytes += 500
+        self.progress["value"] = self.bytes
+        if self.bytes < self.maxbytes:
+            # read more bytes after 100 ms
+#            self.after(100, self.read_bytes)
+	    self.read_bytes
+
+#	for i in range(0, 50000, 1):
+#	    self.progress["value"] = i
+#	    time.sleep(0.1)
+#	    fenetre.update
 
 
 fenetre = Tk()
@@ -141,6 +197,7 @@ fenetre.title("Ss_cleaner")
 Canvas(fenetre, width=250, height=100, bg='ivory').pack(side=TOP, padx=5, pady=5)
 
 console_btn = StringVar()
+
 
 
 menubar = Menu(fenetre)
@@ -179,6 +236,5 @@ menu4.add_command(label="A propos", command=alert)
 menubar.add_cascade(label="Aide", menu=menu4)
 
 fenetre.config(menu=menubar)
-
-
+#app = App(fenetre)
 fenetre.mainloop()
