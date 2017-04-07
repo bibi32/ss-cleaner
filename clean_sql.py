@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import MySQLdb
+import sqlite3
 import os
 import sys
 import re
@@ -11,15 +11,10 @@ from ConfigParser import SafeConfigParser
 config = SafeConfigParser()
 config.read('config.ini')
 
-host = config.get('MYSQL', 'host')
-user = config.get('MYSQL', 'user')
-passwd = config.get('MYSQL', 'passwd')
-db = config.get('MYSQL', 'db')
-
 source = config.get('PATH', 'romssource')
 destination = config.get('PATH', 'romsclean')
 
-db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db)
+db = sqlite3.connect('nointro.db')
 cur = db.cursor()
 
 exclus = config.items('EXCLUS')
@@ -37,14 +32,14 @@ def count_null(console):
 
 ## Fonction count nbr roms OK
 def count_ok(console):
-    sql = "SELECT COUNT(*) FROM "+console+" WHERE status=%s"
+    sql = "SELECT COUNT(*) FROM "+console+" WHERE status=?"
     cur.execute( sql, ('OK',))
     result=cur.fetchone()
     return str(result[0])
 
 ## Fonction Supprimer doublons
 def suppr_doublon(console):
-    sql = "UPDATE "+console+" SET status=%s WHERE status IS NULL"
+    sql = "UPDATE "+console+" SET status=? WHERE status IS NULL"
     cur.execute( sql, ('KO',))
 
 ## Fonction marquer unique
@@ -52,7 +47,7 @@ def mark_unique(console,colonne):
     cur.execute("SELECT name, COUNT(*) c FROM "+console+" WHERE status IS NULL GROUP BY "+colonne+" HAVING c = 1 ")
     rows = cur.fetchall()
     for row in rows:
-	sql = "UPDATE "+console+" SET status=%s WHERE name=%s"
+	sql = "UPDATE "+console+" SET status=? WHERE name=?"
 	cur.execute( sql, ('OK', row[0]))
 
 ## Fonction marquer doublons
@@ -66,24 +61,23 @@ def mark_doublons(console,colonne):
 	mysqlcmd = ""
 	arguments = [row[0]]
 	for key, keptregion in keptregions:
-	    mysqlcmd += "WHEN name LIKE %s THEN "+str(i)+" "
+	    mysqlcmd += "WHEN name LIKE ? THEN "+str(i)+" "
 	    arguments.append("%"+keptregion+"%")
 	    i += 1
 	mysqlcmd += "ELSE "+str(i)
 
-	sql = "SELECT name FROM "+console+" WHERE status IS NULL AND "+colonne+"=%s ORDER BY CASE "+mysqlcmd+" END LIMIT 1"
+	sql = "SELECT name FROM "+console+" WHERE status IS NULL AND "+colonne+"=? ORDER BY CASE "+mysqlcmd+" END LIMIT 1"
 	cur.execute( sql, tuple(arguments))
 	rows = cur.fetchall()
 	for row in rows:
-	    sql = "UPDATE "+console+" SET status=%s WHERE name=%s"
+	    sql = "UPDATE "+console+" SET status=? WHERE name=?"
 	    cur.execute( sql, ('OK', row[0]))
 
 ## Fonction copier résultat final
 def copy_roms():
-    sql = "SELECT * FROM "+console+" WHERE status=%s"
+    sql = "SELECT * FROM "+console+" WHERE status=?"
     cur.execute( sql, ('OK',))
     rows = cur.fetchall()
-
     directory = destination + console
 
     if os.path.exists(directory):
@@ -93,8 +87,8 @@ def copy_roms():
 	if not os.path.exists(directory):
 	    os.makedirs(directory)
 
-	file_source = source + console + '/' + os.path.splitext(row[2])[0] + '.zip'
-	file_destination = destination + console + '/' + os.path.splitext(row[2])[0] + '.zip'
+	file_source = source + console + '/' + os.path.splitext(row[1])[0] + '.zip'
+	file_destination = destination + console + '/' + os.path.splitext(row[1])[0] + '.zip'
 
 	shutil.copy(file_source, file_destination)
 
@@ -107,7 +101,7 @@ def mark_exclude(console,variable):
 	for content in parentheses:
 	    contenu = re.sub('[(){}<>]', '', content)
 	    if variable in contenu:
-		sql = "UPDATE "+console+" SET status=%s WHERE name=%s"
+		sql = "UPDATE "+console+" SET status=? WHERE name=?"
 		cur.execute( sql, ('KO', row[0]))
 
 
@@ -130,7 +124,7 @@ for key, console in consoles:
 
 ## Marquer exclus2
     for key, exclu2 in exclus2:
-	cur.execute("UPDATE "+console+" SET status=%s WHERE name LIKE %s ",('KO', '%'+exclu2+'%',))
+	cur.execute("UPDATE "+console+" SET status=? WHERE name LIKE ? ",('KO', '%'+exclu2+'%',))
 
 ## Count nbr roms clean
     print "nbr roms clean : " + count_null(console)
@@ -139,9 +133,9 @@ for key, console in consoles:
     cur.execute("SELECT * FROM "+console+" WHERE nom IS NULL")
     rows = cur.fetchall()
     for row in rows:
-	description = row[1]
+	description = row[0]
 	nom = re.sub(" [\(].*?[\)]", "", description)
-	sql = "UPDATE "+console+" SET nom=%s WHERE description=%s"
+	sql = "UPDATE "+console+" SET nom=? WHERE description=?"
 	cur.execute( sql, (nom, description))
 
 ## Marquer unique
@@ -160,7 +154,7 @@ for key, console in consoles:
     print "nbr roms OK : " + count_ok(console)
 
 ## Count nbr nom_ss manquant
-    sql = "SELECT COUNT(*) FROM "+console+" WHERE status=%s AND nom_ss IS NULL"
+    sql = "SELECT COUNT(*) FROM "+console+" WHERE status=? AND nom_ss IS NULL"
     cur.execute( sql, ('OK',))
     result=cur.fetchone()
     print "nbr roms nom_ss manquant : " + str(result[0])
@@ -175,7 +169,7 @@ for key, console in consoles:
     else :
 
 ## Marquer OK en NULL
-	sql = "UPDATE "+console+" SET status = NULL WHERE status=%s"
+	sql = "UPDATE "+console+" SET status = NULL WHERE status=?"
 	cur.execute( sql, ('OK',))
 
 ## Marquer unique nom_ss
