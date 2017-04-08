@@ -5,6 +5,7 @@ from Tkinter import *
 import Tkinter as tk
 from tkFileDialog import askopenfilename
 import ttk
+import os
 import urllib
 import urllib2
 import json
@@ -20,7 +21,13 @@ config.read('config.ini')
 ssid = config.get('ID', 'ssid')
 sspassword = config.get('ID', 'sspassword')
 consoles = config.items('CONSOLES')
+destination = config.get('PATH', 'romssource')
 
+liste = []
+for key, console in consoles:
+    if os.path.exists(destination + console):
+	liste.append(console)
+consoles = liste
 
 def ss_update():
     execfile("ss.py")
@@ -31,7 +38,7 @@ def clean_roms():
 def saveConfig():
     global config
     config.set('CONSOLES', 'console', console_btn.get())
-    config.write(open('config.ini','w'))
+#    config.write(open('config.ini','w'))
 
 def alert():
     showinfo("alerte", "Bravo!")
@@ -69,7 +76,7 @@ def demande():
     value_dat_ = {}
     ask_dat_ = {}
     i = 4
-    for key, console in consoles:
+    for console in consoles:
 
 	dat_[console] = config.get('DAT', console)
 	ask_btn_[console] = Button(fen,text="dat "+console,command=openFile)
@@ -108,7 +115,7 @@ menu1.add_command(label="Quitter", command=fenetre.quit)
 menubar.add_cascade(label="Fichier", menu=menu1)
 
 menu2 = Menu(menubar, tearoff=0)
-for key, console in consoles:
+for console in consoles:
     menu2.add_radiobutton(label = console, value = console, command=saveConfig, variable = console_btn)
 menubar.add_cascade(label="Consoles", menu=menu2)
 
